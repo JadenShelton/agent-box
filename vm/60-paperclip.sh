@@ -63,6 +63,10 @@ cat > "\$D/10-agent-box.conf" <<'DROPEOF'
 # The doctor check inside 'paperclipai run' must see the same launcher path the unit was generated with.
 Environment=PAPERCLIP_SHIM_PATH=%h/.local/libexec/paperclipai-launcher
 Environment=PGHOST=/var/run/postgresql
+# Agents run on this machine and call Paperclip back at PAPERCLIP_API_URL. Left unset, Paperclip
+# derives it from the first allowed hostname (your tailnet name), which the VM can't reach by
+# design. Loopback is always accepted by the hostname guard. See docs/gotchas.md.
+Environment=PAPERCLIP_API_URL=http://127.0.0.1:$PAPERCLIP_PORT
 Environment=PAPERCLIP_TELEMETRY_DISABLED=1
 Environment=DO_NOT_TRACK=1
 # Inherited by the agent CLIs Paperclip launches. Auto-updates for Claude Code stay ON here;

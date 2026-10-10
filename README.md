@@ -243,7 +243,8 @@ This is the instance the scripts were distilled from.
 
 - ✅ **Design and manual steps:** verified on real hardware as described above.
 - ✅ **Generalized scripts, end to end:** `./bootstrap.sh host`, `vm`, `onboard` and `service` were run on a clean throwaway VM (2 vCPU, 4 GiB) alongside the long-running production VM, which was not affected. Results: `verify` reported all checks OK (internet reachable; host SSH, router and another LAN server blocked), `audit` came back clean, `agents` SSH worked while root and `sudo` were refused, rootless Docker ran `hello-world`, Paperclip started as a service, `doctor` passed, a bootstrap admin invite could be generated, strict secrets mode was enabled, and **the VM was restarted and Paperclip, Docker and PostgreSQL came back on their own with nobody logged in.**
-- ⏳ **Not re-tested from the scripts:** `./bootstrap.sh expose` (`tailscale serve`; the same command was tested by hand on the production VM) and running real agent tasks on the test VM (done by hand on the production VM; see [Cost notes](#cost-notes)).
+- ⚠️ **Found afterwards, by a real agent run:** agents could not reach Paperclip's API, because `PAPERCLIP_API_URL` defaulted to the tailnet hostname, which the VM cannot reach by design. Fixed in `vm/60-paperclip.sh` (see [gotchas](docs/gotchas.md#agents-time-out-calling-paperclips-own-api)); the fixed script has not been re-run on a clean VM.
+- ⏳ **Not re-tested from the scripts:** `./bootstrap.sh expose` (`tailscale serve`; the same command was tested by hand on the production VM) and real agent runs.
 - Developed against Ubuntu 26.04, Incus 6.0.5, Paperclip `2026.916.1`, Node 24.21, npm 11.19, Docker 29.x.
 
 ## Repo layout

@@ -62,6 +62,13 @@ Every menu in `paperclipai onboard` highlights the quick, local-only option (Qui
 
 Paperclip's `tailnet` option detects a Tailscale IP to bind to. The VM deliberately has none (see the README's architecture notes), so it falls back to loopback and the UI is unreachable from the host. Use "Private network (`lan`)", which binds `0.0.0.0` inside the VM. The VM's firewall then limits port 3100 to the host.
 
+## Agents time out calling Paperclip's own API
+
+**Symptom:** an agent run reports that `http://<your-tailnet-name>:3100` is unreachable, even a read-only `/api/agents/me`, and its Paperclip MCP servers fail to connect. The run burns tokens doing nothing.
+**Why:** Paperclip tells every agent where to call back through `PAPERCLIP_API_URL`. If you don't set it, the server derives it from the first *allowed hostname* plus the port: `http://case.<tailnet>.ts.net:3100`. From inside the VM that name points at the host's tailnet address. The egress firewall blocks it on purpose, and nothing listens on 3100 there anyway (`tailscale serve` is on 443). The UI works fine from your browser, so nothing looks wrong until an agent runs.
+**Fix:** set `PAPERCLIP_API_URL=http://127.0.0.1:3100` in the service environment (`vm/60-paperclip.sh` does). An explicit env var wins over the derived value, agents run on the same machine as the server, and loopback is always accepted by the hostname guard. It doesn't affect the URL your browser uses.
+**Why the test run missed it:** `verify` and `doctor` check the firewall and the server, not a real agent run. Run one tiny task end to end after any install.
+
 ## Paperclip's hostname allowlist
 
 In `authenticated` + `private` mode, requests whose `Host` header isn't allowlisted get `403`. Add your tailnet hostname during onboarding, or later with `paperclipai allowed-hostname <name>`. A `403` from `http://<vm-ip>:3100` is therefore normal and good.
