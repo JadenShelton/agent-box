@@ -48,7 +48,7 @@ The firewall rules name the uplink interface. After a change, set `UPLINK` in `c
 
 ## npm 11 blocks install scripts: leave it that way
 
-During `npm i -g paperclipai`, npm reports blocked scripts for `@embedded-postgres/linux-x64`, `ssh2`, `protobufjs` and `cpu-features`. With an external database none are needed (`ssh2`/`cpu-features` are optional native speed-ups). Don't "fix" the warning by setting `allow-scripts` globally: that allows install scripts from every future dependency.
+During `npm i -g paperclipai @anthropic-ai/claude-code`, npm reports blocked install scripts, e.g. for `@embedded-postgres/linux-x64`, `ssh2`, `protobufjs` and (depending on version) `cpu-features`, plus `@anthropic-ai/claude-code`'s own `postinstall` (`install.cjs`). With an external database none of the Paperclip ones are needed (`ssh2`/`cpu-features` are optional native speed-ups). `claude --version` and normal use work without Claude Code's postinstall in the version tested (2.1.296), but if the CLI ever misbehaves after an update, that blocked script is the first suspect: allow it for that one package once with `npm install -g --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code`. Don't "fix" the warning by setting `allow-scripts` globally: that allows install scripts from every future dependency.
 
 ## postgres.js ignores `?host=` in the connection URL
 
