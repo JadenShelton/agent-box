@@ -36,7 +36,16 @@ require_root
 DRY=(--dry-run)
 [ "${1:-}" = "apply" ] && DRY=()
 
-u() { echo "+ ufw $*"; ufw "${DRY[@]}" "$@"; }
+# In a dry run ufw prints the whole iptables ruleset it WOULD load, which buries the answer.
+# Keep only the verdict lines: "Skipping ..." (already there), "Rule(s) added/updated", errors.
+u() {
+    echo "+ ufw $*"
+    if [ ${#DRY[@]} -gt 0 ]; then
+        ufw "${DRY[@]}" "$@" 2>&1 | grep -E '^(Skipping|Rules? (added|updated|deleted)|ERROR|Could not)' | sed 's/^/    /' || true
+    else
+        ufw "$@"
+    fi
+}
 
 if ! ufw status | head -1 | grep -q 'Status: active'; then
     cat <<EOF
@@ -47,7 +56,7 @@ WARNING: ufw is not active on this host.
   (e.g. 'sudo ufw allow from <your LAN subnet> to any port 22 proto tcp'), then 'sudo ufw enable'.
 EOF
 fi
-[ ${#DRY[@]} -gt 0 ] && echo "DRY RUN: nothing will be changed. Re-run with 'apply'."
+[ ${#DRY[@]} -gt 0 ] && echo "DRY RUN: nothing will be changed. Re-run with 'apply'. ('Rules updated (v6)' lines are IPv6 twins that step 5 removes again.)"
 echo "Bridge: $BRIDGE   Uplink: $UPLINK   Blocked ranges: $BLOCKED_RANGES"
 
 echo "== 1+2. DHCP and DNS from the VM to the host's dnsmasq"
