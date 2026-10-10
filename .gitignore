@@ -1,0 +1,10 @@
+# Your settings and anything secret-shaped never get committed.
+config.env
+*.env
+!config.example.env
+*.pem
+*.key
+id_*
+*.pub
+.env*
+*.log
