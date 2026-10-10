@@ -2,7 +2,7 @@
 
 A small, locked-down home server for running [Paperclip](https://github.com/paperclipai/paperclip) (open-source multi-agent orchestration) and the AI coding agents it manages, with the agents confined to a virtual machine that can reach the internet but not your home network.
 
-> **Status.** The design and every individual step were built and verified by hand on a real machine (details in [How I run it](#how-i-run-it)). The scripts in this repo are those steps, generalized and parameterized. The end-to-end run of the generalized scripts on a clean VM is tracked in [Testing status](#testing-status): read that before trusting a step.
+> **Status.** The design and every step were built and verified by hand on a real machine (details in [How I run it](#how-i-run-it)). The scripts in this repo are those steps, generalized and parameterized, and have been run end to end on a clean VM. See [Testing status](#testing-status) for exactly what was and wasn't covered.
 
 ```
                          your workstation
@@ -242,7 +242,8 @@ This is the instance the scripts were distilled from.
 ## Testing status
 
 - ✅ **Design and manual steps:** verified on real hardware as described above.
-- 🔄 **Generalized scripts:** refactored from those manual steps (parameterized, made idempotent, nested provisioning added). They pass `bash -n` and the generated nested scripts were rendered and syntax-checked, but the full `./bootstrap.sh host && ./bootstrap.sh vm` run on a clean VM is still being exercised. Expect to hit a rough edge; please open an issue with the output if you do.
+- ✅ **Generalized scripts, end to end:** `./bootstrap.sh host`, `vm`, `onboard` and `service` were run on a clean throwaway VM (2 vCPU, 4 GiB) alongside the long-running production VM, which was not affected. Results: `verify` reported all checks OK (internet reachable; host SSH, router and another LAN server blocked), `audit` came back clean, `agents` SSH worked while root and `sudo` were refused, rootless Docker ran `hello-world`, Paperclip started as a service, `doctor` passed, a bootstrap admin invite could be generated, strict secrets mode was enabled, and **the VM was restarted and Paperclip, Docker and PostgreSQL came back on their own with nobody logged in.**
+- ⏳ **Not re-tested from the scripts:** `./bootstrap.sh expose` (`tailscale serve`; the same command was tested by hand on the production VM) and running real agent tasks on the test VM (done by hand on the production VM; see [Cost notes](#cost-notes)).
 - Developed against Ubuntu 26.04, Incus 6.0.5, Paperclip `2026.916.1`, Node 24.21, npm 11.19, Docker 29.x.
 
 ## Repo layout
