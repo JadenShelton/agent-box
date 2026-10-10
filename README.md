@@ -151,20 +151,34 @@ All run as root over `incus exec` (vsock, no network). Steps that need the `agen
 
 ## Onboarding Paperclip
 
-`./bootstrap.sh onboard` is interactive. **Every menu's highlighted default is the quick, local, no-login choice.** Move the arrow keys. Choose:
+`./bootstrap.sh onboard` is interactive. **Every menu's highlighted default is the quick, local, no-login choice**, and several prompts (backups, logging, storage) have no "accept the default" key: you must type or paste the values, even when they match the suggestion. Answer like this:
 
-1. **Setup path:** *Advanced setup*.
-2. **Database mode:** *PostgreSQL (external server)*; connection string **`postgres:///paperclip`** (the socket directory comes from `PGHOST`, which the scripts set).
-3. **Reachability:** *Private network (`lan`)*: authenticated mode, binds `0.0.0.0` inside the VM (the VM firewall limits it to the host). **Not `tailnet`**: it looks for a Tailscale IP, the VM has none, and it falls back to loopback.
-4. **Port:** `3100`. **Allowed private hostnames:** the name you'll browse to, e.g. `<host>.<tailnet>.ts.net` (add more later with `./bootstrap.sh paperclip allowed-hostname <name>`).
-5. Leave database backups on (the default: every 120 minutes, 7 days of retention).
+| Prompt | Answer |
+|---|---|
+| Choose setup path | **Advanced setup** (move the arrow; Quickstart is highlighted) |
+| Database mode | **PostgreSQL (external server)** |
+| PostgreSQL connection string | **`postgres:///paperclip`** (the socket directory comes from `PGHOST`, which the scripts set) |
+| Enable automatic database backups? | **Yes** |
+| Backup directory | `/home/agents/.paperclip/instances/default/data/backups` |
+| Backup interval (minutes) / retention (days) | `120` / `7` |
+| *(expect "Database connection successful")* | |
+| Configure an LLM provider now? | **No** (the API key goes in later, through the UI, as a secret) |
+| Logging mode / log directory | File-based logging / `/home/agents/.paperclip/instances/default/logs` |
+| Reachability | **Private network (`lan`)**: authenticated mode, binds `0.0.0.0` inside the VM (the VM firewall limits it to the host). **Not `tailnet`**: it looks for a Tailscale IP, the VM has none, and it falls back to loopback. |
+| Server port | `3100` |
+| Allowed private hostnames | the name you will browse to, e.g. `<host>.<tailnet>.ts.net` (add more later with `./bootstrap.sh paperclip allowed-hostname <name>`) |
+| Storage provider / base directory | Local disk / `/home/agents/.paperclip/instances/default/data/storage` |
+| Secrets | none asked: defaults are used (`local_encrypted`, strict mode **off**; we turn it on below) |
+| Start Paperclip now? | **No** (the service does that) |
 
-Then, before starting the service:
+**Expected error at the end:** `Could not create bootstrap invite: Failed query: ... instance_user_roles`. The database tables don't exist until the server has started once. Ignore it; you generate the invite after the service is running (below).
+
+Then, before starting the service (strict secrets mode is the one setting onboarding leaves off):
 
 ```bash
 sudo ./bootstrap.sh paperclip configure --section secrets   # turn ON "Require secret refs for sensitive env vars"
 sudo ./bootstrap.sh paperclip doctor                        # expect: authenticated/private, PostgreSQL connection successful
-sudo ./bootstrap.sh service
+sudo ./bootstrap.sh service                                 # its JSON says "lingerEnabled": false; harmless (see gotchas)
 sudo ./bootstrap.sh paperclip auth bootstrap-ceo --expires-hours 1   # prints a one-time admin invite URL
 ```
 
